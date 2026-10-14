@@ -3,6 +3,13 @@
   <p class="list-count">
     <%= len(tasks) %> <%= if (len(tasks) == 1) { %>tarea en tu lista<% } else { %>tareas en tu lista<% } %>
   </p>
+  <%= if (len(tasks) > 0) { %>
+    <nav class="sort-options" aria-label="Ordenar tareas">
+      <span>Ordenar por:</span>
+      <a href="/"<%= if (sort != "priority") { %> aria-current="true"<% } %>>Creación</a>
+      <a href="/?sort=priority"<%= if (sort == "priority") { %> aria-current="true"<% } %>>Prioridad</a>
+    </nav>
+  <% } %>
 </header>
 
 <section aria-labelledby="list-heading">
@@ -30,6 +37,7 @@
             </button>
           </form>
           <span class="task-title"><%= t.Title %></span>
+          <span class="task-priority <%= t.PriorityClass() %>"><span class="sr-only">Prioridad: </span><%= t.PriorityLabel() %></span>
           <%= if (t.Completed) { %>
             <span class="task-status">Completada</span>
           <% } %>
@@ -68,13 +76,28 @@
       placeholder="Añadir una tarea…"
       maxlength="200"
       autocomplete="off"
-      <%= if (errors.HasAny()) { %>autofocus aria-invalid="true" aria-describedby="title-error"<% } %>
+      <%= if (len(errors.Get("title")) > 0) { %>autofocus aria-invalid="true" aria-describedby="title-error"<% } %>
     >
+    <label for="task-priority" class="sr-only">Prioridad</label>
+    <select
+      id="task-priority"
+      name="priority"
+      <%= if (len(errors.Get("priority")) > 0) { %>aria-invalid="true" aria-describedby="priority-error"<% } %>
+    >
+      <%= for (p) in priorities { %>
+        <option value="<%= p.Value %>"<%= if (p.Value == task.Priority) { %> selected<% } %>><%= p.Label %></option>
+      <% } %>
+    </select>
     <button type="submit" class="button button-primary">Añadir</button>
   </div>
-  <%= if (errors.HasAny()) { %>
+  <%= if (len(errors.Get("title")) > 0) { %>
     <p id="title-error" class="field-error" role="alert">
       <%= for (msg) in errors.Get("title") { %><%= msg %><% } %>
+    </p>
+  <% } %>
+  <%= if (len(errors.Get("priority")) > 0) { %>
+    <p id="priority-error" class="field-error" role="alert">
+      <%= for (msg) in errors.Get("priority") { %><%= msg %><% } %>
     </p>
   <% } %>
 </form>
