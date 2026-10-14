@@ -31,7 +31,7 @@ Puede ejecutarse sin supervisión (`claude -p`, lanzado por `adws/trigger-github
 ## Flujo
 
 1. **Precondiciones.**
-   - `git status --short --branch`. El árbol debe estar limpio; si no, detente (no hagas stash).
+   - `git status --short --branch`. El árbol debe estar limpio; si no, detente **sin comentar en la issue** (el problema es del checkout, no del encargo) y no hagas stash.
    - `git remote get-url <remoto>` debe existir. Deduce `OWNER/REPO` de esa URL.
    - `gh auth status` debe estar autenticado.
    - `git fetch <remoto> <base>`.
@@ -39,6 +39,12 @@ Puede ejecutarse sin supervisión (`claude -p`, lanzado por `adws/trigger-github
    - Si el argumento es una URL de issue, ejecuta `gh issue view <url> --json number,title,body,labels,state,url`. Si está cerrada, detente.
    - Si no, el texto es la descripción.
    - Guarda el número de la issue y su `OWNER/REPO` para enlazarla después.
+   - **Encargo ya en curso.** Si hay issue, comprueba si ya se trabajó en ella:
+     - `git branch --list '*/<n>-*'`;
+     - `git ls-remote --heads <remoto> '*/<n>-*'`;
+     - `gh pr list --repo <OWNER/REPO> --state open --search '<n> in:body'`, buscando un PR cuyo cuerpo contenga `Closes #<n>`.
+
+     Si hay alguna coincidencia, termina **sin comentar ni cambiar nada** e indica en el informe que el encargo ya está en curso. El trigger vuelve a lanzar `/adw` mientras la issue siga abierta y con la etiqueta, así que esta comprobación evita repetir el trabajo y los comentarios.
 3. **Tipo.** Decide en este orden:
    - `--type`;
    - etiquetas de la issue: `bug` → bug; `chore`, `maintenance` o `dependencies` → chore; `feature` o `enhancement` → feature;
@@ -112,11 +118,11 @@ Puede ejecutarse sin supervisión (`claude -p`, lanzado por `adws/trigger-github
 Si te detienes, en cualquier paso:
 
 - No hagas push de trabajo a medias, salvo que el commit ya exista y solo falle el PR.
-- Si hay issue, publica un comentario con `gh issue comment <url>` que diga:
+- Si hay issue, publica **un único** comentario con `gh issue comment <url>` que diga:
   - el paso en el que te detuviste;
   - el motivo concreto;
   - qué haría falta para continuar.
-- Deja los cambios sin commitear en su rama y no los descartes. Informa de la rama para que alguien los revise.
+- Si ya estabas en la rama del encargo y quedan cambios tuyos sin commitear, guárdalos en un commit local `wip: <motivo de la parada>` (sin push) y vuelve a `<base>`. Así el trabajo no se pierde, el checkout queda limpio para el siguiente encargo y la rama local marca la issue como «en curso». No descartes nada.
 - Termina con el informe final.
 
 ## Informe final
