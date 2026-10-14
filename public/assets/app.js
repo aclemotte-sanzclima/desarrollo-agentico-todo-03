@@ -12,7 +12,29 @@ document.addEventListener("submit", function (event) {
   event.preventDefault();
 
   var task = form.closest(".task");
-  var completed = task.classList.toggle("task-completed");
+  var completed = !task.classList.contains("task-completed");
+  applyToggleState(task, form, completed);
+
+  // Envía lo mismo que el formulario: POST con _method=PUT y authenticity_token.
+  fetch(form.action, {
+    method: "POST",
+    body: new URLSearchParams(new FormData(form)),
+    credentials: "same-origin",
+    headers: { Accept: "text/html" }
+  })
+    .then(function (response) {
+      if (!response.ok) {
+        throw new Error("HTTP " + response.status);
+      }
+    })
+    .catch(function () {
+      applyToggleState(task, form, !completed);
+    });
+});
+
+// Refleja en la interfaz si la tarea está completada o pendiente.
+function applyToggleState(task, form, completed) {
+  task.classList.toggle("task-completed", completed);
   var button = form.querySelector("button");
   var status = task.querySelector(".task-status");
 
@@ -30,6 +52,4 @@ document.addEventListener("submit", function (event) {
   } else if (!completed && status) {
     status.remove();
   }
-
-  fetch(form.action);
-});
+}
