@@ -1,7 +1,7 @@
 # Repositorio cuyas issues debe consultar el trigger: OWNER/REPO.
-repo: ""
+repo: aclemotte-sanzclima/desarrollo-agentico-todo-03
 label: adw
-interval_seconds: 20
+interval_seconds: 300
 
 # Invoca el workflow que hayas creado. {{issue_url}} recibe cada issue.
 prompt: >-
