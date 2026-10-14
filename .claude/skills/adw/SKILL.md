@@ -46,7 +46,8 @@ Puede ejecutarse sin supervisión (`claude -p`, lanzado por `adws/trigger-github
 
    Indica en el informe cómo lo decidiste.
 4. **Rama.**
-   - Nombre: `<tipo>/<n>-<slug>`, o `<tipo>/<slug>` sin issue. El slug va en kebab-case, sin acentos y con un máximo de 40 caracteres.
+   - Prefijo según el tipo del commit: feature → `feat`, bug → `fix`, chore → `chore`.
+   - Nombre: `<prefijo>/<n>-<slug>`, o `<prefijo>/<slug>` sin issue. El slug va en kebab-case, sin acentos y con un máximo de 40 caracteres.
    - Si la rama ya existe en local o en el remoto, detente; no la reutilices.
    - `git switch -c <rama> <remoto>/<base>`.
 5. **Plan.**
@@ -58,26 +59,40 @@ Puede ejecutarse sin supervisión (`claude -p`, lanzado por `adws/trigger-github
    - el alcance excede claramente lo pedido.
 
    Las inferencias razonables que el plan documente no son motivo de parada; menciónalas en el PR.
-7. **Implementación.**
-   - Invoca la skill `implement` con `plans/<slug>.md`.
+7. **Entorno de pruebas.** Antes de implementar, decide dónde se ejecutará la validación:
+   - **Host:** si `go` está en `PATH` y PostgreSQL acepta las credenciales de `database.yml` (entorno `test`, `DB_HOST` o `127.0.0.1:5432`).
+   - **Contenedores:** si falta alguna de las dos cosas y Docker responde. Ejecuta la validación de forma aislada para no tocar otros servicios ni puertos:
+     1. `docker network create adw-<slug>`.
+     2. `docker run -d --name adw-<slug>-db --network adw-<slug> -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=todo_test <imagen de db de compose.yaml>`, **sin** publicar puertos. Espera a que `pg_isready` responda.
+     3. `docker run --rm --network adw-<slug> -e DB_HOST=adw-<slug>-db -e GO_ENV=test -v <repo>:/src:ro golang:<versión de go.mod>`, que ejecuta:
+        - copiar `/src` a `/work`;
+        - en la copia, pasar a LF los scripts `*.sh` (los CRLF de un checkout de Windows rompen Bash);
+        - instalar `soda` con la versión que usa la CI;
+        - `soda migrate -e test` y `go test -p 1 ./...`.
+     4. Elimina siempre el contenedor y la red al terminar, también si hubo fallos.
+   - **Ninguno:** si no hay Go ni Docker, la validación quedará **incompleta**.
+
+   En un checkout con CRLF, `gofmt -l .` marca todos los archivos. Evalúalo sobre el contenido normalizado a LF, por ejemplo `tr -d '\r' < archivo | gofmt -l`.
+8. **Implementación.**
+   - Invoca la skill `implement` con `plans/<slug>.md`, indicando en los argumentos el modo de validación elegido en el paso 7.
    - Si la skill se detiene por un bloqueo, propágalo como parada.
    - Si no, recoge los comandos de validación y su resultado.
-8. **Estado de la validación.**
+9. **Estado de la validación.**
    - **Verde:** todos los comandos del plan pasan.
    - **Incompleta:** algún comando no pudo ejecutarse, por ejemplo por falta de PostgreSQL o de toolchain.
    - **Roja:** algún test o comprobación falla tras un intento razonable de corregirlo dentro del plan.
 
    Nunca maquilles el resultado.
-9. **Commit.**
-   - Invoca `git:commit` indicando como alcance exactamente el plan y los archivos que cambió `/implement`.
-   - Mensaje en Conventional Commits:
-     - el tipo es `feat`, `fix` o `chore` según el encargo;
-     - la primera línea tiene 50 caracteres o menos;
-     - el cuerpo incluye `Refs #<n>` si hay issue;
-     - añade la línea de coautoría que indique el sistema, si existe.
-   - Comprueba con `git log -1 --stat` que el commit existe y que el árbol queda limpio.
-10. **Push.** `git push -u <remoto> <rama>`. Si falla, detente; no fuerces.
-11. **Pull request.** Ejecuta `gh pr create --repo <OWNER/REPO del remoto> --base <base> --head <rama>`:
+10. **Commit.**
+    - Redacta tú el mensaje **completo** y pásalo a `git:commit` con `-m`, junto con la lista exacta de archivos: el plan y los que cambió `/implement`. `git:commit` conserva literalmente un mensaje dado con `-m`, así que no debe faltar nada.
+    - Mensaje en Conventional Commits:
+      - el tipo es `feat`, `fix` o `chore` según el encargo;
+      - la primera línea tiene 50 caracteres o menos;
+      - el cuerpo incluye `Refs #<n>` si hay issue;
+      - añade la línea de coautoría que indique el sistema, si existe.
+    - Comprueba con `git log -1 --stat` que el commit existe y que el árbol queda limpio.
+11. **Push.** `git push -u <remoto> <rama>`. Si falla, detente; no fuerces.
+12. **Pull request.** Ejecuta `gh pr create --repo <OWNER/REPO del remoto> --base <base> --head <rama>`:
     - Título: la primera línea del commit.
     - Cuerpo:
       - **Resumen:** el comportamiento nuevo.
@@ -90,7 +105,7 @@ Puede ejecutarse sin supervisión (`claude -p`, lanzado por `adws/trigger-github
       - si está en el mismo repositorio, `Closes #<n>`;
       - si está en otro, `Closes <OWNER>/<REPO>#<n>`.
     - Si la validación es **incompleta** o **roja**, abre el PR con `--draft` y explica el motivo al principio del cuerpo.
-12. **Cierre.** Vuelve a `<base>` con `git switch <base>` para dejar el checkout listo para el siguiente encargo. No borres la rama local.
+13. **Cierre.** Vuelve a `<base>` con `git switch <base>` para dejar el checkout listo para el siguiente encargo. No borres la rama local.
 
 ## Paradas
 
