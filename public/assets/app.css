@@ -19,8 +19,9 @@ form {
   --color-muted: #686864;
   --color-border: #e9e9e5;
   --color-sidebar: #f7f7f5;
-  --color-primary: #b73526;
-  --color-primary-hover: #992b1e;
+  --color-primary: #f5c518;
+  --color-primary-hover: #e0ad00;
+  --color-primary-ink: #8a6100;
   --color-focus: #245ab4;
   --color-danger: #a52b25;
   --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -64,7 +65,7 @@ body {
 }
 
 .brand-dot {
-  color: var(--color-primary);
+  color: var(--color-primary-ink);
 }
 
 .nav-link {
@@ -74,15 +75,15 @@ body {
   min-height: 44px;
   padding: 0.55rem 0.7rem;
   border-radius: 6px;
-  background: #f7e9e4;
-  color: #a03123;
+  background: #fdf3c4;
+  color: #6b4e00;
   font-size: 0.9rem;
   font-weight: 600;
   text-decoration: none;
 }
 
 .nav-link:hover {
-  background: #f2ded6;
+  background: #fbe8a0;
 }
 
 .nav-link svg {
@@ -231,9 +232,9 @@ h1 {
 }
 
 .task-toggle-button:hover .completion-icon {
-  background: #f7e9e4;
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  background: #fdf3c4;
+  border-color: var(--color-primary-ink);
+  color: var(--color-primary-ink);
 }
 
 .task-toggle-button:hover .completion-icon svg {
@@ -296,7 +297,7 @@ h1 {
   flex-shrink: 0;
   width: 44px;
   height: 44px;
-  color: var(--color-primary);
+  color: var(--color-primary-ink);
   font-size: 1.8rem;
   font-weight: 300;
   line-height: 1;
@@ -360,13 +361,13 @@ select[aria-invalid="true"] {
 
 .button-primary {
   background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #ffffff;
+  border-color: var(--color-primary-ink);
+  color: var(--color-text);
 }
 
 .button-primary:hover {
   background: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
+  border-color: var(--color-primary-ink);
 }
 
 a:focus-visible,
